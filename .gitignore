@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+!.env.example
+
+# local scraper
+scraper/.fb-profile/
+scraper/node_modules/
+scraper/data/
