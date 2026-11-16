@@ -65,6 +65,10 @@ npm run crawl                # đọc bài mới của các nhóm (1 lần)
 npm run watch                # chạy lặp lại mỗi WATCH_INTERVAL_MINUTES phút
 ```
 
+**Windows:** bấm đúp `scraper\run-windows.bat`. Lần đầu nó tự cài đặt, mở Chromium để bạn đăng nhập Facebook, tìm nhóm rồi crawl; các lần sau chỉ crawl. Chạy `run-windows.bat watch` để lặp lại định kỳ.
+
+Bản dev trên Vercel bật Deployment Protection: tạo *Protection Bypass for Automation* rồi điền vào `VERCEL_BYPASS_SECRET` trong `scraper/.env`.
+
 Tắt bớt nhóm không liên quan: trong Supabase, đặt `groups.enabled = false`.
 
 Chạy định kỳ thay vì `watch`:

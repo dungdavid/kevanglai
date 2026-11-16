@@ -13,6 +13,8 @@ export const config = {
   scrolls: Number(process.env.SCROLLS_PER_GROUP ?? 6),
   watchMinutes: Number(process.env.WATCH_INTERVAL_MINUTES ?? 30),
   headless: process.env.HEADLESS === "true",
+  /** Vercel "Protection Bypass for Automation" secret, needed for protected (dev/preview) deployments. */
+  vercelBypass: process.env.VERCEL_BYPASS_SECRET ?? "",
 };
 
 /** Persistent Chromium profile so you only log in to Facebook once. */
@@ -42,7 +44,11 @@ export async function api<T>(method: "GET" | "POST", route: string, body?: unkno
   if (!config.secret) throw new Error("Thiếu INGEST_SECRET trong scraper/.env");
   const res = await fetch(`${config.apiBase}${route}`, {
     method,
-    headers: { "content-type": "application/json", authorization: `Bearer ${config.secret}` },
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${config.secret}`,
+      ...(config.vercelBypass ? { "x-vercel-protection-bypass": config.vercelBypass } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = (await res.json().catch(() => ({}))) as T & { error?: unknown };
