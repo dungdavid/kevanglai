@@ -36,8 +36,24 @@ describe("heuristicExtract", () => {
     expect(r.slotsTotal).toBe(3);
     expect(r.priceVnd).toBe(40000);
     expect(r.playTime).toBe("19h-21h");
-    expect(r.venueName).toBe("sân Tiên Sơn");
+    expect(r.venueName).toBe("Sân Tiên Sơn");
+    expect(r.address).toBeNull();
+    expect(r.playDate).toBe("thứ 5");
+    expect(r.level).toBeNull();
     expect(r.phone).toBe("0905123456");
+  });
+});
+
+describe("heuristicExtract edge cases", () => {
+  it("reads explicit address, TB- level and date", () => {
+    const r = heuristicExtract("Team cần thêm 3 nữ giao lưu, sân Chi Lăng, 20h-22h thứ 7. Trình TB-, 35k/nữ. Đc: 1 Đường Chi Lăng, Hải Châu");
+    expect(r.address).toBe("1 Đường Chi Lăng, Hải Châu");
+    expect(r.level).toBe("TB-");
+    expect(r.playDate).toBe("thứ 7");
+    expect(r.slotsFemale).toBe(3);
+  });
+  it("tối nay", () => {
+    expect(heuristicExtract("Pass lại 1 sân Hòa Xuân 18h-20h tối nay, giá 120k").playDate).toBe("tối nay");
   });
 });
 

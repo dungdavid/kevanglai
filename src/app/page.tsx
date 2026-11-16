@@ -1,69 +1,86 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import { Filters } from "@/components/Filters";
+import { PostCard } from "@/components/PostCard";
+import { demoPosts } from "@/lib/demo";
+import { listPosts, parseFilters } from "@/lib/queries";
+import { supabaseConfigured } from "@/lib/supabase";
+import { requestTime } from "@/lib/time";
+import { connection } from "next/server";
 
-export default function Home() {
+type SP = Record<string, string | string[] | undefined>;
+
+async function Results({ searchParams }: { searchParams: Promise<SP> }) {
+  const filters = parseFilters(await searchParams);
+
+  await connection();
+  const now = requestTime();
+  let posts: Awaited<ReturnType<typeof listPosts>> = [];
+  let error: string | null = null;
+  if (supabaseConfigured) {
+    try {
+      posts = await listPosts(filters);
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  } else {
+    posts = demoPosts(filters, now);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      {!supabaseConfigured && (
+        <p className="mb-4 rounded-xl border border-shuttle/60 bg-shuttle/15 px-4 py-3 text-sm">
+          Đang hiển thị <strong>dữ liệu mẫu</strong> — chưa cấu hình <code>SUPABASE_URL</code> / <code>SUPABASE_ANON_KEY</code>.
+        </p>
+      )}
+      <Filters filters={filters} />
+      <p className="mt-4 text-sm text-muted">{error ? `Lỗi tải dữ liệu: ${error}` : `${posts.length} kèo phù hợp`}</p>
+      {posts.length === 0 && !error ? (
+        <p className="mt-6 rounded-xl border border-dashed border-line p-10 text-center text-muted">
+          Chưa có kèo nào khớp bộ lọc. Thử mở rộng thời gian hoặc bỏ bớt điều kiện.
+        </p>
+      ) : (
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((p) => (
+            <PostCard key={p.id} post={p} now={now} />
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      )}
+    </>
+  );
+}
+
+function ResultsSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="h-11 animate-pulse rounded-xl bg-card ring-1 ring-line" />
+      <div className="h-16 animate-pulse rounded-xl bg-card/60" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="h-64 animate-pulse rounded-2xl bg-card ring-1 ring-line" />
+        ))}
+      </div>
     </div>
+  );
+}
+
+export default function Home({ searchParams }: PageProps<"/">) {
+  return (
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-10">
+      <header className="mb-6">
+        <p className="text-sm font-semibold uppercase tracking-wider text-court">🏸 Đà Nẵng</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Kèo Vãng Lai</h1>
+        <p className="mt-2 max-w-2xl text-muted">
+          Tổng hợp bài <strong>tuyển vãng lai</strong> và <strong>pass sân</strong> cầu lông từ các nhóm Facebook ở Đà Nẵng —
+          lọc theo giá, số nam/nữ còn thiếu và khu vực.
+        </p>
+      </header>
+      <Suspense fallback={<ResultsSkeleton />}>
+        <Results searchParams={searchParams} />
+      </Suspense>
+      <footer className="mt-12 border-t border-line pt-4 text-xs text-muted">
+        Dữ liệu được trích xuất tự động từ bài đăng công khai trong nhóm — có thể sai sót, hãy kiểm tra bài gốc trước khi đi.
+      </footer>
+    </main>
   );
 }

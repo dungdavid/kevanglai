@@ -93,13 +93,18 @@ export function heuristicExtract(text: string): Extraction {
   const prices = parsePrices(text);
 
   const venueMatch = t.match(VENUE_RE);
-  const venueName = venueMatch ? originalSlice(text, t, venueMatch) : null;
+  const venueRaw = venueMatch ? originalSlice(text, t, venueMatch) : null;
+  const venueName = venueRaw ? venueRaw.charAt(0).toUpperCase() + venueRaw.slice(1) : null;
 
-  const addrMatch = t.match(/(?:dia chi|dc|đc|o|tai)\s*[:\-]?\s*([^\n]{5,80})/);
-  const address = addrMatch ? originalSlice(text, t, addrMatch).replace(/^(địa chỉ|đc|dc|ở|tại)\s*[:\-]?\s*/i, "") : null;
+  const addrMatch = t.match(/(?:^|[\s,.])(?:dia chi|dc)\s*[:\-]?\s*[^\n]{5,80}?(?=\.\s|\n|$)/);
+  const address = addrMatch
+    ? originalSlice(text, t, addrMatch).replace(/^[\s,.]*(địa chỉ|đc|dc)\s*[:\-]?\s*/i, "").trim()
+    : null;
 
   const timeMatch = t.match(/(\d{1,2}\s*[h:]\s*\d{0,2})\s*(?:-|den|toi|->|~)\s*(\d{1,2}\s*[h:]\s*\d{0,2})/);
-  const dateMatch = t.match(/(thu\s*[2-7]|chu nhat|cn|hom nay|toi nay|ngay mai|mai)\b[^\n,]{0,12}|\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?/);
+  const dateMatch = t.match(
+    /(?:thu\s*[2-7]|chu nhat|\bcn\b|hom nay|toi nay|sang nay|chieu nay|ngay mai|toi mai)(?:\s+(?:nay|tuan nay|tuan sau|toi))?(?:\s*\(?\d{1,2}\/\d{1,2}\)?)?|\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?/,
+  );
   const phoneMatch = text.match(/(?:\+?84|0)(?:[\s.]?\d){9}/);
 
   const male = countFor(t, "nam");
@@ -107,7 +112,7 @@ export function heuristicExtract(text: string): Extraction {
   const totalMatch = t.match(/(\d+)\s*(?:nguoi|ban|slot|vl|vang lai)/);
   const total = totalMatch ? Number(totalMatch[1]) : male !== null || female !== null ? (male ?? 0) + (female ?? 0) : null;
 
-  const levelMatch = t.match(/\b(yeu|tb[\s-]?(?:yeu|kha|\+|-)?|trung binh(?: kha| yeu)?|kha|gioi|y\+|tby|tbk)\b/);
+  const levelMatch = t.match(/(?:trinh|tr)\s*(?:do)?\s*[:\-]?\s*(yeu|tb\s?(?:yeu|kha)|tb[+-]?|trung binh(?: kha| yeu)?|kha|gioi|y\+|tby|tbk)(?=[\s,.;)]|$)|\b(tb[+-]|tby|tbk|y\+)(?=[\s,.;)]|$)/);
 
   return {
     type,
@@ -120,7 +125,7 @@ export function heuristicExtract(text: string): Extraction {
     slotsTotal: type === "tuyen_vang_lai" ? total : null,
     slotsMale: type === "tuyen_vang_lai" ? male : null,
     slotsFemale: type === "tuyen_vang_lai" ? female : null,
-    level: levelMatch ? levelMatch[1].toUpperCase() : null,
+    level: levelMatch ? (levelMatch[1] ?? levelMatch[2]).toUpperCase() : null,
     phone: phoneMatch ? phoneMatch[0].replace(/[\s.]/g, "") : null,
   };
 }
