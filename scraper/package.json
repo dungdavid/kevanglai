@@ -1,0 +1,23 @@
+{
+  "name": "kevanglai-scraper",
+  "private": true,
+  "type": "module",
+  "description": "Local Facebook group scraper for Kèo Vãng Lai Đà Nẵng. Runs on your own machine with your logged-in Facebook session.",
+  "scripts": {
+    "setup": "playwright install chromium",
+    "login": "tsx src/login.ts",
+    "discover": "tsx src/discover.ts",
+    "crawl": "tsx src/crawl.ts",
+    "watch": "tsx src/crawl.ts --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "playwright": "^1.48.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
