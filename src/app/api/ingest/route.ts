@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isAuthorized } from "@/lib/auth";
-import { engagementScore, extract, mapsUrl } from "@/lib/extract";
+import { derivedFields, engagementScore, extract } from "@/lib/extract";
 import { getAdminClient } from "@/lib/supabase";
 import { IngestBodySchema } from "@/lib/types";
 
@@ -56,7 +56,9 @@ export async function POST(req: Request) {
       continue;
     }
 
-    const { data: x, extractor } = await extract(p.text);
+    // Scraper may not resolve the post time; "now" is a close upper bound for freshly crawled posts.
+    const postedAt = (p.postedAt && Date.parse(p.postedAt)) || Date.now();
+    const { data: x, extractor } = await extract(p.text, postedAt);
     const { error } = await db.from("posts").upsert(
       {
         fb_post_id: p.fbPostId,
@@ -67,12 +69,12 @@ export async function POST(req: Request) {
         author_url: p.authorUrl,
         raw_text: p.text,
         text_hash: hash,
-        posted_at: p.postedAt ?? null,
+        posted_at: new Date(postedAt).toISOString(),
         ...counters,
         type: x.type,
         venue_name: x.venueName,
         address: x.address,
-        maps_url: mapsUrl(x.venueName, x.address),
+        ...derivedFields(x, p.text, postedAt),
         price_text: x.priceText,
         price_vnd: x.priceVnd,
         play_date: x.playDate,
@@ -82,6 +84,7 @@ export async function POST(req: Request) {
         slots_female: x.slotsFemale,
         level: x.level,
         phone: x.phone,
+        zalo: x.zalo,
         extractor,
       },
       { onConflict: "fb_post_id" },
