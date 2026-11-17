@@ -11,7 +11,8 @@ export async function GET(req: Request) {
     .from("groups")
     .select("id, name, url, last_crawled_at")
     .eq("enabled", true)
-    .order("last_crawled_at", { ascending: true, nullsFirst: true });
+    .order("last_crawled_at", { ascending: true, nullsFirst: true })
+    .order("member_count", { ascending: false, nullsFirst: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ groups: data });
 }

@@ -20,7 +20,9 @@ const isRelevant = (name: string) => {
   const n = name.toLowerCase();
   const sport = /cầu lông|cau long|badminton|\bcl\b/.test(n);
   const place = /đà nẵng|da nang|danang|đn\b|hải châu|sơn trà|liên chiểu|ngũ hành sơn|cẩm lệ|thanh khê|hòa vang|hòa xuân/.test(n);
-  return sport && place;
+  // buy/sell, tournaments and coaching groups never have pass-sân / vãng lai posts
+  const offTopic = /chợ|cho cau long|thanh lý|thanh ly|vợt cũ|vot cu|các giải|cac giai|lớp học|lop hoc/.test(n);
+  return sport && place && !offTopic;
 };
 
 interface Found {
