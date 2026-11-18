@@ -78,4 +78,4 @@ await ctx.close();
 const groups = [...found.values()].sort((a, b) => (b.memberCount ?? 0) - (a.memberCount ?? 0));
 console.table(groups.map((g) => ({ name: g.name, members: g.memberCount, privacy: g.privacy, url: g.url })));
 const res = await api<{ upserted: number }>("POST", "/api/groups", { groups });
-console.log(`✅ Đã lưu ${res.upserted} nhóm. Lưu ý: nhóm riêng tư cần tham gia bằng tài khoản scraper mới đọc được bài.`);
+console.log(`✅ Đã lưu ${res.upserted} nhóm (nhóm mới mặc định TẮT — bật cột groups.enabled trong Supabase để crawl).`);

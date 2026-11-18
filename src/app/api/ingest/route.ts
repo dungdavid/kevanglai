@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isAuthorized } from "@/lib/auth";
-import { derivedFields, engagementScore, extract } from "@/lib/extract";
+import { derivedFields, engagementScore, extract, EXTRACTOR_VERSION } from "@/lib/extract";
 import { getAdminClient } from "@/lib/supabase";
 import { IngestBodySchema } from "@/lib/types";
 
@@ -23,9 +23,12 @@ export async function POST(req: Request) {
   // Skip AI work for posts whose text hasn't changed; only refresh counters.
   const { data: existing } = await db
     .from("posts")
-    .select("fb_post_id, text_hash")
+    .select("fb_post_id, text_hash, extractor")
     .in("fb_post_id", posts.map((p) => p.fbPostId));
-  const known = new Map((existing ?? []).map((r) => [r.fb_post_id as string, r.text_hash as string]));
+  // key = text hash + extractor version: re-extract when either the post or the rules changed
+  const known = new Map(
+    (existing ?? []).map((r) => [r.fb_post_id as string, `${r.text_hash}|${String(r.extractor).split("-").pop()}`]),
+  );
 
   // Make sure every referenced group exists (FK).
   const groups = [...new Map(posts.map((p) => [p.groupId, p])).values()].map((p) => ({
@@ -49,7 +52,7 @@ export async function POST(req: Request) {
       updated_at: new Date().toISOString(),
     };
 
-    if (known.get(p.fbPostId) === hash) {
+    if (known.get(p.fbPostId) === `${hash}|${EXTRACTOR_VERSION}`) {
       const { error } = await db.from("posts").update(counters).eq("fb_post_id", p.fbPostId);
       if (error) errors.push(`${p.fbPostId}: ${error.message}`);
       else updated++;

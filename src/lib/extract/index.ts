@@ -5,15 +5,18 @@ import { geminiEnabled, geminiExtract } from "./gemini";
 import { heuristicExtract } from "./heuristic";
 import { resolveSchedule } from "./schedule";
 
+/** Bump when extraction rules change: ingest re-extracts posts stored by an older version. */
+export const EXTRACTOR_VERSION = "v2";
+
 export async function extract(text: string, postedAt: number): Promise<{ data: Extraction; extractor: string }> {
   if (geminiEnabled()) {
     try {
-      return { data: await geminiExtract(text, postedAt), extractor: "gemini" };
+      return { data: await geminiExtract(text, postedAt), extractor: `gemini-${EXTRACTOR_VERSION}` };
     } catch (err) {
       console.error("[extract] Gemini failed, falling back to heuristic:", err);
     }
   }
-  return { data: heuristicExtract(text), extractor: "heuristic" };
+  return { data: heuristicExtract(text), extractor: `heuristic-${EXTRACTOR_VERSION}` };
 }
 
 /** Google Maps search link for an address/venue in Da Nang. */

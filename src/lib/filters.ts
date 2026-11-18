@@ -7,8 +7,6 @@ export const TYPE_TABS = [
   { id: "all", label: "Tất cả", db: null },
   { id: "vl", label: "Tuyển VL", db: "tuyen_vang_lai" },
   { id: "pass", label: "Pass sân", db: "pass_san" },
-  { id: "nhom", label: "Tìm nhóm", db: "tim_nhom" },
-  { id: "san", label: "Tìm sân", db: "tim_san" },
 ] as const satisfies readonly { id: string; label: string; db: PostType | null }[];
 export type TypeTab = (typeof TYPE_TABS)[number]["id"];
 
@@ -72,3 +70,6 @@ export function filterHref(f: Filters, patch: Partial<Filters> = {}): string {
 }
 
 export const dbType = (tab: TypeTab) => TYPE_TABS.find((t) => t.id === tab)?.db ?? null;
+
+/** Only these post types are shown on the site (tìm nhóm / tìm sân / gear are kept out). */
+export const LISTED_TYPES = ["tuyen_vang_lai", "pass_san"] as const;

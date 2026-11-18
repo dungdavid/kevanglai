@@ -1,12 +1,12 @@
 import "server-only";
-import { dbType, type Filters } from "./filters";
+import { dbType, LISTED_TYPES, type Filters } from "./filters";
 import { applyMemoryFilters, dateWindow, HOUR } from "./queries-shared";
 import { getReadClient } from "./supabase";
 import type { PostRow } from "./types";
 
 export async function listPosts(f: Filters, now: number): Promise<PostRow[]> {
   const { from, to } = dateWindow(f, now);
-  let q = getReadClient().from("posts").select("*").neq("type", "other").limit(300);
+  let q = getReadClient().from("posts").select("*").in("type", [...LISTED_TYPES]).limit(300);
 
   const type = dbType(f.type);
   if (type) q = q.eq("type", type);
@@ -30,7 +30,7 @@ export async function listPosts(f: Filters, now: number): Promise<PostRow[]> {
 
 export async function getPost(id: string): Promise<PostRow | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const { data, error } = await getReadClient().from("posts").select("*").eq("id", id).neq("type", "other").maybeSingle();
+  const { data, error } = await getReadClient().from("posts").select("*").eq("id", id).in("type", [...LISTED_TYPES]).maybeSingle();
   if (error) throw new Error(error.message);
   return (data as PostRow) ?? null;
 }

@@ -36,7 +36,7 @@ export function resolveSchedule(text: string, postedAt: number): Schedule {
   const dm = t.match(/\b(\d{1,2})\s*[/.-]\s*(\d{1,2})(?:\s*[/.-]\s*(\d{2,4}))?\b/);
   if (/\b(ngay kia|ngay mot|\bmot\b)/.test(t)) dayOffset = 2;
   else if (/\b(ngay mai|toi mai|sang mai|chieu mai|trua mai|\bmai\b)/.test(t)) dayOffset = 1;
-  else if (/\b(hom nay|toi nay|sang nay|chieu nay|trua nay|dem nay|bay gio|luc nay)\b/.test(t)) dayOffset = 0;
+  else if (/\b(hom nay|toi nay|khuya nay|sang nay|chieu nay|trua nay|dem nay|bay gio|luc nay)\b/.test(t)) dayOffset = 0;
   else {
     const wd = t.match(/\b(?:thu\s*([2-7])|(cn|chu nhat))\b/);
     if (wd) {
@@ -51,11 +51,15 @@ export function resolveSchedule(text: string, postedAt: number): Schedule {
   }
 
   // --- time ---
-  const range = t.match(/(\d{1,2}\s*(?:h|g|:|gio)\s*\d{0,2})\s*(?:-|–|den|toi|->|~|\bto\b)\s*(\d{1,2}\s*(?:h|g|:|gio)?\s*\d{0,2})(\s*(?:toi|chieu|sang|dem|pm|am))?/);
+  // "19h-21h", "19:30 - 21:30", "19-21h", "19h 21h", "7h-9h tối"
+  const range =
+    t.match(/(?<![\d/])(\d{1,2}\s*(?:h|g|:|gio)\s*\d{0,2})\s*(?:-|–|den|toi|->|~|\bto\b)\s*(\d{1,2}\s*(?:h|g|:|gio)?\s*\d{0,2})(\s*(?:toi|chieu|sang|dem|pm|am))?/) ??
+    t.match(/(?<![\d/])(\d{1,2})\s*(?:-|–|den|->|~)\s*(\d{1,2}\s*(?:h|g|gio)\s*\d{0,2})(\s*(?:toi|chieu|sang|dem|pm|am))?/) ??
+    t.match(/(?<![\d/])(\d{1,2}\s*h\s*\d{0,2})\s+(\d{1,2}\s*h\s*\d{0,2})(\s*(?:toi|chieu|sang|dem|pm|am))?/);
   let start: [number, number] | null = null;
   let end: [number, number] | null = null;
   if (range) {
-    start = parseClock(range[1]);
+    start = parseClock(/\d\s*(h|g|:|gio)/.test(range[1]) ? range[1] : `${range[1]}h`);
     end = parseClock(/\d\s*(h|g|:|gio)/.test(range[2]) ? range[2] : `${range[2]}h`);
   } else {
     const single = t.match(/(\d{1,2})\s*(?:h|g|gio)\s*(\d{1,2})?\b/) ?? t.match(/\b(\d{1,2}):(\d{2})\b/);

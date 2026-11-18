@@ -86,8 +86,8 @@ export default function Home({ searchParams }: PageProps<"/">) {
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-court">Đà Nẵng · tổng hợp tự động</p>
         <h1 className="text-[26px] font-extrabold tracking-tight sm:text-4xl">Kèo Vãng Lai</h1>
         <p className="max-w-2xl text-sm text-muted">
-          Tuyển vãng lai, pass sân, tìm nhóm và tìm sân cầu lông từ các nhóm Facebook ở Đà Nẵng. Liên hệ trực tiếp
-          người đăng qua Facebook, Zalo hoặc điện thoại.
+          Tuyển vãng lai và pass sân cầu lông từ nhóm Facebook &ldquo;Cộng đồng cầu lông Đà Nẵng&rdquo;. Liên hệ trực
+          tiếp người đăng qua Facebook, Zalo hoặc điện thoại.
         </p>
       </header>
       <Suspense fallback={<ResultsSkeleton />}>

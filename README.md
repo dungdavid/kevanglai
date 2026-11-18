@@ -65,7 +65,11 @@ npm run crawl                # đọc bài mới của các nhóm (1 lần)
 npm run watch                # chạy lặp lại mỗi WATCH_INTERVAL_MINUTES phút
 ```
 
-**Windows:** bấm đúp `scraper\run-windows.bat`. Lần đầu nó tự cài đặt, mở Chromium để bạn đăng nhập Facebook, tìm nhóm rồi crawl; các lần sau chỉ crawl. Chạy `run-windows.bat watch` để lặp lại định kỳ.
+**Windows:** bấm đúp `scraper\run-windows.bat` (lần đầu: cài đặt + đăng nhập Facebook). Sau đó chạy `scraper\schedule-windows.bat` một lần để Windows tự chạy scraper mỗi 30 phút (log ở `scraper\data\crawl.log`).
+
+Nhóm được crawl lấy từ bảng `groups` (cột `enabled`). Hiện chỉ bật nhóm *Cộng đồng cầu lông Đà Nẵng* (809551886722490); nhóm mới tìm được bằng `discover` mặc định tắt.
+
+Ghi chú cũ: Lần đầu nó tự cài đặt, mở Chromium để bạn đăng nhập Facebook, tìm nhóm rồi crawl; các lần sau chỉ crawl. Chạy `run-windows.bat watch` để lặp lại định kỳ.
 
 Bản dev trên Vercel bật Deployment Protection: tạo *Protection Bypass for Automation* rồi điền vào `VERCEL_BYPASS_SECRET` trong `scraper/.env`.
 

@@ -1,6 +1,6 @@
 import { derivedFields, engagementScore } from "./extract";
 import { heuristicExtract } from "./extract/heuristic";
-import { dbType, type Filters } from "./filters";
+import { dbType, LISTED_TYPES, type Filters } from "./filters";
 import { applyMemoryFilters, dateWindow } from "./queries-shared";
 import type { PostRow } from "./types";
 
@@ -39,6 +39,7 @@ export function demoPosts(f: Filters, now: number): PostRow[] {
   const type = dbType(f.type);
   return applyMemoryFilters(
     rows.filter((p) => {
+      if (!(LISTED_TYPES as readonly string[]).includes(p.type)) return false;
       if (type && p.type !== type) return false;
       if (f.district && p.district !== f.district) return false;
       if (f.level && p.level_rank && p.level_rank > f.level) return false;
