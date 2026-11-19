@@ -10,7 +10,7 @@ export const config = {
   apiBase: (process.env.API_BASE ?? "http://localhost:3000").replace(/\/$/, ""),
   secret: process.env.INGEST_SECRET ?? "",
   maxGroups: Number(process.env.MAX_GROUPS_PER_RUN ?? 8),
-  scrolls: Number(process.env.SCROLLS_PER_GROUP ?? 6),
+  scrolls: Number(process.env.SCROLLS_PER_GROUP ?? 4),
   watchMinutes: Number(process.env.WATCH_INTERVAL_MINUTES ?? 30),
   headless: process.env.HEADLESS === "true",
   /** Vercel "Protection Bypass for Automation" secret, needed for protected (dev/preview) deployments. */

@@ -65,7 +65,7 @@ npm run crawl                # đọc bài mới của các nhóm (1 lần)
 npm run watch                # chạy lặp lại mỗi WATCH_INTERVAL_MINUTES phút
 ```
 
-**Windows:** bấm đúp `scraper\run-windows.bat` (lần đầu: cài đặt + đăng nhập Facebook). Sau đó chạy `scraper\schedule-windows.bat` một lần để Windows tự chạy scraper mỗi 30 phút (log ở `scraper\data\crawl.log`).
+**Windows:** bấm đúp `scraper\run-windows.bat` (lần đầu: cài đặt + đăng nhập Facebook). Sau đó chạy `scraper\schedule-windows.bat` một lần để Windows tự chạy scraper mỗi 10 phút (log ở `scraper\data\crawl.log`).
 
 Nhóm được crawl lấy từ bảng `groups` (cột `enabled`). Hiện chỉ bật nhóm *Cộng đồng cầu lông Đà Nẵng* (809551886722490); nhóm mới tìm được bằng `discover` mặc định tắt.
 
@@ -77,7 +77,7 @@ Tắt bớt nhóm không liên quan: trong Supabase, đặt `groups.enabled = fa
 
 Chạy định kỳ thay vì `watch`:
 - **macOS/Linux** (`crontab -e`): `*/30 7-22 * * * cd /đường/dẫn/scraper && npm run crawl >> crawl.log 2>&1`
-- **Windows**: Task Scheduler → chạy `npm run crawl` trong thư mục `scraper` mỗi 30 phút.
+- **Windows**: Task Scheduler → chạy `npm run crawl` trong thư mục `scraper` mỗi 10 phút.
 
 ### Lưu ý
 

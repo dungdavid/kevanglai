@@ -25,17 +25,23 @@ const TIME_TEXT = /^(\d+\s*(giây|phút|giờ|ngày|tuần|năm|s|m|h|d|w|y)|v�
 
 /** Facebook only fills the permalink on the timestamp link after hover — hover to reveal it. */
 async function revealPermalink(unit: Locator): Promise<string | null> {
-  const direct = await unit.locator('a[href*="/posts/"], a[href*="/permalink/"]').first().getAttribute("href").catch(() => null);
+  const direct = await unit
+    .locator('a[href*="/posts/"], a[href*="/permalink/"]')
+    .first()
+    .getAttribute("href", { timeout: 500 })
+    .catch(() => null);
   if (direct && POST_LINK.test(direct)) return direct;
   const links = unit.locator('a[role="link"]');
-  const n = Math.min(await links.count(), 15);
-  for (let i = 0; i < n; i++) {
+  const n = Math.min(await links.count(), 12);
+  let tried = 0;
+  for (let i = 0; i < n && tried < 2; i++) {
     const a = links.nth(i);
-    const text = ((await a.innerText().catch(() => "")) || (await a.getAttribute("aria-label")) || "").trim();
+    const text = ((await a.innerText({ timeout: 500 }).catch(() => "")) || (await a.getAttribute("aria-label", { timeout: 500 }).catch(() => "")) || "").trim();
     if (!TIME_TEXT.test(text)) continue;
-    await a.hover({ timeout: 2000 }).catch(() => {});
-    await sleep(400);
-    const href = await a.getAttribute("href").catch(() => null);
+    tried++;
+    await a.hover({ timeout: 1000 }).catch(() => {});
+    await sleep(300);
+    const href = await a.getAttribute("href", { timeout: 500 }).catch(() => null);
     if (href && POST_LINK.test(href)) return href;
   }
   return null;
@@ -43,7 +49,7 @@ async function revealPermalink(unit: Locator): Promise<string | null> {
 
 async function expandSeeMore(unit: Locator) {
   const btn = unit.getByRole("button", { name: /^(Xem thêm|See more)$/ }).first();
-  if (await btn.count()) await btn.click({ timeout: 2000 }).catch(() => {});
+  if (await btn.count()) await btn.click({ timeout: 1000 }).catch(() => {});
 }
 
 function normalizeAuthorUrl(href: string | null): string {
@@ -53,6 +59,11 @@ function normalizeAuthorUrl(href: string | null): string {
   if (groupUser) return `https://www.facebook.com/profile.php?id=${groupUser[1]}`;
   if (u.pathname === "/profile.php") return `https://www.facebook.com/profile.php?id=${u.searchParams.get("id")}`;
   return `https://www.facebook.com${u.pathname.replace(/\/$/, "")}`;
+}
+
+/** Give up on a single feed unit after `ms` so one odd post can't stall the whole run. */
+function withBudget<T>(ms: number, work: Promise<T>): Promise<T> {
+  return Promise.race([work, new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`quá ${ms / 1000}s`)), ms))]);
 }
 
 async function scrapeGroup(page: Page, group: GroupRow): Promise<RawPost[]> {
@@ -72,9 +83,14 @@ async function scrapeGroup(page: Page, group: GroupRow): Promise<RawPost[]> {
   for (let i = 0; i < total; i++) {
     const unit = units.nth(i);
     try {
-      await unit.scrollIntoViewIfNeeded({ timeout: 3000 });
-      await expandSeeMore(unit);
-      const href = await revealPermalink(unit);
+      const href = await withBudget(
+        8000,
+        (async () => {
+          await unit.scrollIntoViewIfNeeded({ timeout: 2000 });
+          await expandSeeMore(unit);
+          return revealPermalink(unit);
+        })(),
+      );
       const m = href?.match(POST_LINK);
       if (!m) continue;
       const fbPostId = m[2];
@@ -118,6 +134,7 @@ async function scrapeGroup(page: Page, group: GroupRow): Promise<RawPost[]> {
       console.warn(`  ⚠️ bỏ qua 1 bài: ${(err as Error).message.split("\n")[0]}`);
     }
   }
+  console.log(`   ${posts.size}/${total} bài đọc được`);
   return [...posts.values()];
 }
 
@@ -142,7 +159,7 @@ async function runOnce() {
         console.log(`   +${r.inserted} mới, ${r.updated} cập nhật${r.errors.length ? `, ${r.errors.length} lỗi` : ""}`);
       }
       await api("POST", "/api/groups", { crawled: [g.id] });
-      await jitter(8000, 15000); // pause between groups
+      if (g !== batch[batch.length - 1]) await jitter(8000, 15000); // pause between groups
     }
   } finally {
     await ctx.close();
